@@ -1,5 +1,4 @@
 ﻿using kartlib.Serial;
-using System.Diagnostics;
 
 namespace BillysToolbox.Editors
 {
@@ -44,6 +43,9 @@ namespace BillysToolbox.Editors
                 case ".bdof2":
                     BDOF bdof = new BDOF(buffer, fileName);
                     return new BDOFEditorForm(bdof, parentInstance);
+                case ".tpl":
+                    TPL tpl = new TPL(buffer, fileName);
+                    return new TPLViewerForm(tpl, parentInstance);
                 default:
                     return null;
             }

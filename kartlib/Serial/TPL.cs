@@ -146,13 +146,15 @@ namespace kartlib.Serial
 
         public class _Image
         {
-            private _ImageHeader ImageHeader;
-            private _PaletteHeader? PaletteHeader;
-            private ImageFormat Format;
-            private byte[] ImageData;
-            private byte[]? PaletteData;
+            public _ImageHeader ImageHeader;
+            public _PaletteHeader? PaletteHeader;
+            public ImageFormat Format;
+            public byte[] ImageData;
+            public byte[]? PaletteData;
 
             public Bitmap? Image;
+
+            public _Image() { }
 
             public _Image (EndianReader reader, _ImageTable table)
             {
@@ -181,12 +183,19 @@ namespace kartlib.Serial
 
                 Image = Format.ToBitmap(ImageData, ImageHeader.Width, ImageHeader.Height, PaletteData, PaletteHeader?.Format);
             }
+
+            public ImageFormatEnum GetFormat()
+            {
+                return ImageHeader.Format;
+            }
         }
 
         public string Filename;
         public _FileHeader FileHeader;
         public List<_ImageTable> ImageTables;
         public List<_Image> Images;
+
+        private ImageFormat Format;
 
         public TPL(byte[] buffer, string filename)
         {
@@ -210,7 +219,148 @@ namespace kartlib.Serial
             }
         }
 
-        public static byte[] CreateTPL(byte[] rawPixelData, ushort width, ushort height, ImageFormatEnum format, byte[]? paletteData = null, TPL._PaletteHeader.PaletteFormat paletteFormat = TPL._PaletteHeader.PaletteFormat.RGB5A3)
+        public byte[] Write()
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                EndianWriter writer = new EndianWriter(ms, Endianness.BigEndian);
+
+                uint fileHeaderSize = 12;
+                uint imageTableSize = 8;
+                uint imageHeaderSize = 36;
+                uint paletteHeaderSize = 12;
+
+                FileHeader.ImageCount = (uint)Images.Count;
+                FileHeader.ImageTableOffset = fileHeaderSize;
+                FileHeader.Write(writer);
+
+                uint currentHeaderOffset = fileHeaderSize + (uint)(Images.Count * imageTableSize);
+                uint currentDataOffset = currentHeaderOffset;
+
+                foreach (var img in Images)
+                {
+                    currentDataOffset += imageHeaderSize;
+                    if (img.PaletteHeader != null)
+                        currentDataOffset += paletteHeaderSize;
+                }
+
+                currentDataOffset = (currentDataOffset + 31) & ~31u;
+
+                for (int i = 0; i < Images.Count; i++)
+                {
+                    var img = Images[i];
+                    var table = ImageTables[i];
+
+                    table.ImageOffset = currentHeaderOffset;
+                    currentHeaderOffset += imageHeaderSize;
+
+                    if (img.PaletteHeader != null)
+                    {
+                        table.PaletteOffset = currentHeaderOffset;
+                        currentHeaderOffset += paletteHeaderSize;
+
+                        img.PaletteHeader.DataAddress = currentDataOffset;
+                        currentDataOffset += (uint)img.PaletteData.Length;
+                        currentDataOffset = (currentDataOffset + 31) & ~31u; // 32-byte alignment after palette
+                    }
+                    else
+                    {
+                        table.PaletteOffset = 0;
+                    }
+
+                    img.ImageHeader.DataAddress = currentDataOffset;
+                    currentDataOffset += (uint)img.ImageData.Length;
+                    currentDataOffset = (currentDataOffset + 31) & ~31u; // 32-byte alignment after image
+
+                    table.Write(writer);
+                }
+
+                foreach (var img in Images)
+                {
+                    img.ImageHeader.Write(writer);
+                    if (img.PaletteHeader != null)
+                        img.PaletteHeader.Write(writer);
+                }
+
+                foreach (var img in Images)
+                {
+                    if (img.PaletteHeader != null)
+                    {
+                        while (ms.Position < img.PaletteHeader.DataAddress) writer.WriteByte(0);
+                        writer.WriteBytes(img.PaletteData);
+                    }
+
+                    while (ms.Position < img.ImageHeader.DataAddress) writer.WriteByte(0);
+                    writer.WriteBytes(img.ImageData);
+                }
+
+                return ms.ToArray();
+            }
+        }
+
+        public void AddImage(Bitmap bitmap, ImageFormatEnum formatEnum, _PaletteHeader.PaletteFormat paletteFormat = _PaletteHeader.PaletteFormat.RGB5A3)
+        {
+            ImageFormat format = ImageFactory.GetFormat(formatEnum);
+            if (format == null)
+                throw new NotSupportedException($"ImageFormat {formatEnum} is not supported.");
+
+            byte[] imageData = format.FromBitmap(bitmap);
+            byte[] paletteData = format.LastGeneratedPalette;
+
+            _ImageHeader imgHeader = new _ImageHeader
+            {
+                Width = (ushort)bitmap.Width,
+                Height = (ushort)bitmap.Height,
+                Format = formatEnum,
+                WrapS = 0,
+                WrapT = 0,
+                MinFilter = 1,
+                MagFilter = 1,
+                LODBias = 0,
+                EdgeLODEnable = 0,
+                MinLOD = 0,
+                MaxLOD = 0,
+                Unpacked = 0
+            };
+
+            _PaletteHeader palHeader = null;
+            if (paletteData != null && paletteData.Length > 0)
+            {
+                palHeader = new _PaletteHeader
+                {
+                    EntryCount = (ushort)(paletteData.Length / 2),
+                    Unpacked = 0,
+                    Reserved = 0,
+                    Format = paletteFormat
+                };
+            }
+
+            _Image newImage = new _Image
+            {
+                ImageHeader = imgHeader,
+                PaletteHeader = palHeader,
+                ImageData = imageData,
+                PaletteData = paletteData,
+                Format = format,
+                Image = bitmap
+            };
+
+            Images.Add(newImage);
+            ImageTables.Add(new _ImageTable());
+            FileHeader.ImageCount = (uint)Images.Count;
+        }
+
+        public void RemoveImage(int index)
+        {
+            if (index < 0 || index >= Images.Count)
+                throw new ArgumentOutOfRangeException(nameof(index), "Image index is out of bounds.");
+
+            Images.RemoveAt(index);
+            ImageTables.RemoveAt(index);
+            FileHeader.ImageCount = (uint)Images.Count;
+        }
+
+        private byte[] CreateTPL(byte[] rawPixelData, ushort width, ushort height, ImageFormatEnum format, byte[]? paletteData = null, TPL._PaletteHeader.PaletteFormat paletteFormat = TPL._PaletteHeader.PaletteFormat.RGB5A3)
         {
             uint fileHeaderSize = 12;
             uint imageTableSize = 8;
