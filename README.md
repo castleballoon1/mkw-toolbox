@@ -3,7 +3,7 @@ Wii file editor inspired by [Wexos's Toolbox](https://wiki.tockdom.com/wiki/Wexo
 
 <img src="https://github.com/80kb/BillysToolbox/blob/master/gh-assets/example.png">
 
-## Features
+## Supported File Types
 | File Type | Can Open | Can Save |
 |---|---|---|
 | U8 | Yes | Yes |
@@ -22,3 +22,7 @@ Wii file editor inspired by [Wexos's Toolbox](https://wiki.tockdom.com/wiki/Wexo
 | BREFT | Yes | Yes |
 
 \* Still under development
+
+## Misc Features
+### 2^N Image Scaler Tool
+Allows for batch importing of image files to quickly and automatically resize them to be powers of 2.
