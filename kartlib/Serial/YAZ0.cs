@@ -30,7 +30,7 @@
             Optimal = 1
         }
 
-        public static byte[] Compress(byte[] data, CompressionAlgorithm algorithm = CompressionAlgorithm.Optimal)
+        public static byte[] Compress(byte[] data, CompressionAlgorithm algorithm = CompressionAlgorithm.Optimal, IProgress<int> progress = null)
         {
             switch (algorithm)
             {
@@ -38,11 +38,11 @@
                     return FastEncode(data);
                 case CompressionAlgorithm.Optimal:
                 default:
-                    return OptimalEncode(data);
+                    return OptimalEncode(data, progress);
             }
         }
 
-        private static byte[] OptimalEncode(byte[] data)
+        private static byte[] OptimalEncode(byte[] data, IProgress<int> progress = null)
         {
             MemoryStream stream = new MemoryStream();
             EndianWriter writer = new EndianWriter(stream, Endianness.BigEndian);
@@ -58,6 +58,8 @@
                 // Max size of 8 commands is 8 * 3 bytes = 24 bytes
                 byte[] chunkData = new byte[24];
                 int chunkDataIdx = 0;
+
+                int lastProgress = -1;
 
                 while (position < data.Length)
                 {
@@ -106,6 +108,16 @@
                         chunkCode = 0;
                         chunkDataIdx = 0;
                         bitsLeft = 8;
+                    }
+
+                    if (progress != null)
+                    {
+                        int currentProgress = (int)((position * 100L) / data.Length);
+                        if (currentProgress != lastProgress)
+                        {
+                            progress.Report(currentProgress);
+                            lastProgress = currentProgress;
+                        }
                     }
                 }
             }

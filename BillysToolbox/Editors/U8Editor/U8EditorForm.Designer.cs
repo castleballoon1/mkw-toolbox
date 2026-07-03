@@ -39,6 +39,9 @@
             statusStrip = new StatusStrip();
             itemCountStatusLabel = new ToolStripStatusLabel();
             selectionStatusLabel = new ToolStripStatusLabel();
+            spacer = new ToolStripStatusLabel();
+            compressLabel = new ToolStripStatusLabel();
+            compressProgressBar = new ToolStripProgressBar();
             fileRightClick = new ContextMenuStrip(components);
             copyToolStripMenuItem = new ToolStripMenuItem();
             cutToolStripMenuItem = new ToolStripMenuItem();
@@ -138,7 +141,7 @@
             // statusStrip
             // 
             statusStrip.BackColor = Color.Transparent;
-            statusStrip.Items.AddRange(new ToolStripItem[] { itemCountStatusLabel, selectionStatusLabel });
+            statusStrip.Items.AddRange(new ToolStripItem[] { itemCountStatusLabel, selectionStatusLabel, spacer, compressLabel, compressProgressBar });
             statusStrip.Location = new Point(0, 420);
             statusStrip.Name = "statusStrip";
             statusStrip.RightToLeft = RightToLeft.No;
@@ -157,6 +160,28 @@
             // 
             selectionStatusLabel.Name = "selectionStatusLabel";
             selectionStatusLabel.Size = new Size(0, 17);
+            // 
+            // spacer
+            // 
+            spacer.Name = "spacer";
+            spacer.Size = new Size(734, 17);
+            spacer.Spring = true;
+            spacer.Text = "                       ";
+            // 
+            // compressLabel
+            // 
+            compressLabel.Name = "compressLabel";
+            compressLabel.Size = new Size(116, 17);
+            compressLabel.Text = "Compressing YAZ0...";
+            compressLabel.Visible = false;
+            // 
+            // compressProgressBar
+            // 
+            compressProgressBar.Alignment = ToolStripItemAlignment.Right;
+            compressProgressBar.Margin = new Padding(1, 3, 0, 3);
+            compressProgressBar.Name = "compressProgressBar";
+            compressProgressBar.Size = new Size(100, 16);
+            compressProgressBar.Visible = false;
             // 
             // fileRightClick
             // 
@@ -352,6 +377,7 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "U8EditorForm";
             Text = "U8 Editor";
+            FormClosing += U8EditorForm_FormClosing;
             Load += U8EditorForm_Load;
             splitContainer.Panel1.ResumeLayout(false);
             splitContainer.Panel2.ResumeLayout(false);
@@ -403,5 +429,8 @@
         private ToolStripMenuItem importFilesToolStripMenuItem1;
         private ToolStripMenuItem newFolderToolStripMenuItem1;
         private ContextMenuStrip blankRightClick;
+        private ToolStripProgressBar compressProgressBar;
+        private ToolStripStatusLabel spacer;
+        private ToolStripStatusLabel compressLabel;
     }
 }

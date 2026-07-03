@@ -16,6 +16,7 @@ namespace BillysToolbox.Editors
         private ImageList Icons;
         private Dictionary<List<string>, int> FileTypes;
         private int CurrentFolder;
+        private bool _isCompressing = false;
 
         public U8EditorForm(U8 fileInstance, bool compressed = true)
         {
@@ -93,22 +94,58 @@ namespace BillysToolbox.Editors
                 SaveAs();
                 return;
             }
-            
-            try {
+
+            try
+            {
                 byte[] buffer = FileInstance.Write();
 
-                await Task.Run(() =>
+                if (Compressed)
                 {
-                    if (Compressed)
-                        buffer = YAZ0.Compress(buffer, YAZ0.CompressionAlgorithm.Optimal);
-                    File.WriteAllBytes(FileInstance.Filename, buffer);
-                });
+                    _isCompressing = true;
+
+                    compressLabel.Text = "Compressing YAZ0...";
+                    compressLabel.Visible = true;
+
+                    compressProgressBar.Visible = true;
+                    compressProgressBar.Value = 0;
+
+                    var progress = new Progress<int>(percent =>
+                    {
+                        if (!this.IsDisposed && !compressProgressBar.IsDisposed)
+                        {
+                            compressProgressBar.Value = percent;
+                        }
+                    });
+
+                    await Task.Run(() =>
+                    {
+                        buffer = YAZ0.Compress(buffer, YAZ0.CompressionAlgorithm.Optimal, progress);
+                        File.WriteAllBytes(FileInstance.Filename, buffer);
+                    });
+                }
+                else
+                {
+                    await Task.Run(() =>
+                    {
+                        File.WriteAllBytes(FileInstance.Filename, buffer);
+                    });
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 MessageBox.Show(e.Message, "Couldn't open file", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-}
+            finally
+            {
+                _isCompressing = false;
+
+                if (!this.IsDisposed && !compressProgressBar.IsDisposed)
+                {
+                    compressProgressBar.Visible = false;
+                    compressLabel.Visible = false;
+                }
+            }
+        }
 
         public async void SaveAs()
         {
@@ -123,16 +160,51 @@ namespace BillysToolbox.Editors
                     {
                         byte[] buffer = FileInstance.Write();
 
-                        await Task.Run(() =>
+                        if (sfd.FilterIndex == 1)
                         {
-                            if (sfd.FilterIndex == 1)
+                            _isCompressing = true;
+
+                            compressLabel.Text = "Compressing YAZ0...";
+                            compressLabel.Visible = true;
+
+                            compressProgressBar.Visible = true;
+                            compressProgressBar.Value = 0;
+
+                            var progress = new Progress<int>(percent =>
+                            {
+                                if (!this.IsDisposed && !compressProgressBar.IsDisposed)
+                                {
+                                    compressProgressBar.Value = percent;
+                                }
+                            });
+
+                            await Task.Run(() =>
+                            {
                                 buffer = YAZ0.Compress(buffer, YAZ0.CompressionAlgorithm.Optimal);
-                            File.WriteAllBytes(sfd.FileName, buffer);
-                        });
+                                File.WriteAllBytes(sfd.FileName, buffer);
+                            });
+                        }
+                        else
+                        {
+                            await Task.Run(() =>
+                            {
+                                File.WriteAllBytes(FileInstance.Filename, buffer);
+                            });
+                        }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         MessageBox.Show(e.Message, "Couldn't open file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        _isCompressing = false;
+
+                        if (!this.IsDisposed && !compressProgressBar.IsDisposed)
+                        {
+                            compressProgressBar.Visible = false;
+                            compressLabel.Visible = false;
+                        }
                     }
                 }
             }
@@ -261,7 +333,7 @@ namespace BillysToolbox.Editors
 
             Application.Idle += ForceExpandOnIdle;
         }
-        
+
         private void ForceExpandOnIdle(object? sender, EventArgs e)
         {
             Application.Idle -= ForceExpandOnIdle;
@@ -396,7 +468,8 @@ namespace BillysToolbox.Editors
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    try { 
+                    try
+                    {
                         File.WriteAllBytes(sfd.FileName, Nodes[(int)item.Tag].Data);
                     }
                     catch (Exception ex)
@@ -414,7 +487,8 @@ namespace BillysToolbox.Editors
                     foreach (ListViewItem item in listView.SelectedItems)
                     {
                         string savePath = Path.Combine(dialog.FileName, Path.GetFileName(Nodes[(int)item.Tag].Name));
-                        try { 
+                        try
+                        {
                             File.WriteAllBytes(savePath, Nodes[(int)item.Tag].Data);
                         }
                         catch (Exception ex)
@@ -440,7 +514,8 @@ namespace BillysToolbox.Editors
             {
                 foreach (string filename in openFileDialog.FileNames)
                 {
-                    try { 
+                    try
+                    {
                         byte[] buffer = File.ReadAllBytes(filename);
                         FileInstance.AddFile((int)item.Tag, buffer, filename);
                     }
@@ -581,7 +656,8 @@ namespace BillysToolbox.Editors
                 if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
                     string rootPath = Path.Combine(dialog.FileName, Nodes[(int)item.Tag].Name);
-                    try { 
+                    try
+                    {
                         Directory.CreateDirectory(rootPath);
                         int[] children = FileInstance.GetChildren((int)item.Tag);
                         folderExportHelper(children, rootPath);
@@ -601,7 +677,8 @@ namespace BillysToolbox.Editors
                 if (Nodes[child].Type == U8._Node.NodeType.File)
                 {
                     string filePath = Path.Combine(path, Nodes[child].Name);
-                    try { 
+                    try
+                    {
                         File.WriteAllBytes(filePath, Nodes[child].Data);
                     }
                     catch (Exception ex)
@@ -612,7 +689,8 @@ namespace BillysToolbox.Editors
                 else if (Nodes[child].Type == U8._Node.NodeType.Directory)
                 {
                     string newPath = Path.Combine(path, Nodes[child].Name);
-                    try { 
+                    try
+                    {
                         Directory.CreateDirectory(newPath);
                         folderExportHelper(FileInstance.GetChildren(child), newPath);
                     }
@@ -643,7 +721,8 @@ namespace BillysToolbox.Editors
                 {
                     foreach (string file in ofd.FileNames)
                     {
-                        try { 
+                        try
+                        {
                             byte[] buffer = File.ReadAllBytes(file);
                             FileInstance.AddFile(CurrentFolder, buffer, file);
                             PopulateListView(CurrentFolder);
@@ -676,6 +755,25 @@ namespace BillysToolbox.Editors
             FileInstance.AddFolder(CurrentFolder, "New Folder");
             PopulateListView(CurrentFolder);
             PopulateTree();
+        }
+
+        private void U8EditorForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_isCompressing)
+            {
+                DialogResult result = MessageBox.Show(
+                    "Compression is currently in progress. Are you sure you want to close?",
+                    "Compression in Progress",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2
+                );
+
+                if (result == DialogResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
         }
     }
 }
