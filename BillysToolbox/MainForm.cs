@@ -21,6 +21,7 @@ namespace BillysToolbox
             { "KCL Files (*.kcl)", "*.kcl" },
             { "TPL Files (*.tpl)", "*.tpl" },
             { "BREFF Files (*.breff)", "*.breff" },
+            { "BREFT Files (*.breft)", "*.breft" },
             { "All Files (*.*)", "*.*" },
         };
         public List<KeyValuePair<string, byte[]>> Clipboard = new List<KeyValuePair<string, byte[]>>();
