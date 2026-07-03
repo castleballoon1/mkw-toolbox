@@ -359,6 +359,22 @@
                 foreach (_Animation anim in EmitterAnimations)
                     anim.Write(writer);
             }
+
+            public int SectionSize()
+            {
+                int size = 8;
+
+                size += ParticleAnimations.Count * 8;
+                size += EmitterAnimations.Count * 8;
+
+                foreach (var anim in ParticleAnimations)
+                    size += anim.SectionSize();
+
+                foreach (var anim in EmitterAnimations)
+                    size += anim.SectionSize();
+
+                return size;
+            }
         }
 
         public class _Animation
@@ -444,7 +460,7 @@
             public int SectionSize()
             {
                 int payloadSize = (int)(KeyTableSize + RangeTableSize + RandomTableSize + NameTableSize + InfoTableSize);
-                return 28 + payloadSize;
+                return 32 + payloadSize;
             }
         }
 
@@ -524,9 +540,10 @@
             Table.EntryAmount = (ushort)Table.Entries.Count;
 
             // Table Items
-            size = Table.SectionSize();
+            size = Table.SectionSize() + AnimationTable.SectionSize();
             foreach (_TableItem item in Table.Entries)
             {
+                item.NameLength = (ushort)(item.Name.Length + 1);
                 item.DataOffset = (uint)size;
                 size += (int)item.DataSize;
             }
@@ -642,15 +659,15 @@
                 EmitterLife = reader.ReadUInt16();
                 ParticleLife = reader.ReadUInt16();
                 ParticleLifeRandom = reader.ReadByte();
-                InheritChildParticleTranslation = reader.ReadByte() == 0;
+                InheritChildParticleTranslation = reader.ReadByte() != 0;
                 EmitIntervalRandom = reader.ReadByte();
                 EmitRandom = reader.ReadByte();
                 EmissionRate = reader.ReadSingle();
                 EmitStart = reader.ReadUInt16();
                 EmitEnd = reader.ReadUInt16();
                 EmitInterval = reader.ReadUInt16();
-                InheritParticleTranslation = reader.ReadByte() == 0;
-                InheritChildEmitterTranslation = reader.ReadByte() == 0;
+                InheritParticleTranslation = reader.ReadByte() != 0;
+                InheritChildEmitterTranslation = reader.ReadByte() != 0;
                 EmitterDimensions = new float[6]
                 {
                     reader.ReadSingle(),

@@ -241,8 +241,8 @@ namespace kartlib.Serial
             public byte MinFilter;
             public byte MagFilter;
             public byte Unknown1;
-            public float LODBias;
-            public uint Unknown2;
+            public uint TextureDataOffset;
+            public uint PaletteDataOffset;
 
             public ImageFormat Format;
             public byte[] ImageData;
@@ -263,8 +263,8 @@ namespace kartlib.Serial
                 MinFilter = reader.ReadByte();
                 MagFilter = reader.ReadByte();
                 Unknown1 = reader.ReadByte();
-                LODBias = reader.ReadSingle();
-                Unknown2 = reader.ReadUInt32();
+                TextureDataOffset = reader.ReadUInt32();
+                PaletteDataOffset = reader.ReadUInt32();
 
                 ImageData = reader.ReadBytes((int)ImageDataSize);
 
@@ -296,8 +296,10 @@ namespace kartlib.Serial
                 writer.WriteByte(MinFilter);
                 writer.WriteByte(MagFilter);
                 writer.WriteByte(Unknown1);
-                writer.WriteSingle(LODBias);
-                writer.WriteUInt32(Unknown2);
+
+
+                writer.WriteUInt32(TextureDataOffset);
+                writer.WriteUInt32(PaletteDataOffset);
 
                 writer.WriteBytes(ImageData);
 
@@ -330,6 +332,9 @@ namespace kartlib.Serial
                 this.Image = newImage;
                 this.ImageData = newImageData;
                 this.ImageDataSize = (uint)newImageData.Length;
+
+                this.MipmapCount = 0;
+                this.MinFilter = 0;
 
                 if (newPaletteData != null && newPaletteData.Length > 0)
                 {
@@ -381,29 +386,29 @@ namespace kartlib.Serial
 
         private void CalculateVariables()
         {
-            int size = Header.SectionSize() + BlockHeader.SectionSize() + ProjectHeader.SectionSize() + Table.SectionSize();
+            int tableStart = Header.SectionSize() + BlockHeader.SectionSize() + ProjectHeader.SectionSize();
+
+            int currentOffset = Table.SectionSize();
+
             foreach (_TableItem item in Table.Entries)
-                size += (int)item.DataSize;
+            {
+                int absoluteOffset = tableStart + currentOffset;
+                absoluteOffset = (absoluteOffset + 0x1F) & ~0x1F;
 
-            Header.FileLength = (uint)size;
+                currentOffset = absoluteOffset - tableStart;
 
-            size = ProjectHeader.SectionSize() + Table.SectionSize();
-            foreach (_TableItem item in Table.Entries)
-                size += (int)item.DataSize;
+                item.DataOffset = (uint)currentOffset;
+                item.DataSize = (uint)item.Texture.SectionSize();
 
-            BlockHeader.SectionLength = (uint)size;
-            ProjectHeader.Length = (uint)ProjectHeader.SectionSize();
+                currentOffset += (int)item.DataSize;
+            }
 
             Table.Length = (uint)Table.SectionSize();
             Table.EntryAmount = (ushort)Table.Entries.Count;
 
-            size = Table.SectionSize();
-            foreach (_TableItem item in Table.Entries)
-            {
-                item.DataSize = (uint)item.Texture.SectionSize();
-                item.DataOffset = (uint)size;
-                size += (int)item.DataSize;
-            }
+            ProjectHeader.Length = (uint)ProjectHeader.SectionSize();
+            BlockHeader.SectionLength = (uint)(ProjectHeader.SectionSize() + currentOffset);
+            Header.FileLength = (uint)(Header.SectionSize() + BlockHeader.SectionSize() + BlockHeader.SectionLength);
         }
 
         public byte[] Write()

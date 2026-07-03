@@ -86,10 +86,15 @@ namespace ParticleEditor.Control
         }
 
         [Category("Advanced Settings")]
-        public float LODBias
+        public uint TextureDataOffset
         {
-            get { return Item.Texture.LODBias; }
-            set { Item.Texture.LODBias = value; }
+            get { return Item.Texture.TextureDataOffset; }
+        }
+
+        [Category("Advanced Settings")]
+        public uint PaletteDataOffset
+        {
+            get { return Item.Texture.PaletteDataOffset; }
         }
 
         public TextureDataNode(BREFT._TableItem item) : base(item.Name)
