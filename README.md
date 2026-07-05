@@ -22,9 +22,3 @@ Wii file editor inspired by [Wexos's Toolbox](https://wiki.tockdom.com/wiki/Wexo
 | BREFT | Yes | Yes |
 
 \* Still under development
-
-## Misc Features
-### 2^N Image Scaler Tool
-Allows for batch importing of image files to quickly and automatically resize them to be powers of 2.
-### KCL Editor
-Features a "lower walls" script that lowers wall geometry in the KCL when generated.
