@@ -1,4 +1,6 @@
-﻿namespace kartlib.Serial
+﻿using System.Diagnostics;
+
+namespace kartlib.Serial
 {
     public class BREFF
     {
@@ -123,17 +125,25 @@
 
             public void Write(EndianWriter writer)
             {
+                long startPos = writer.Position;
+
                 writer.WriteUInt32(Length);
                 writer.WriteUInt32(PreviousProject);
                 writer.WriteUInt32(NextProject);
                 writer.WriteUInt16(NameLength);
                 writer.WriteUInt16(Padding);
                 writer.WriteStringNT(Name);
+
+                while ((writer.Position - startPos) % 4 != 0)
+                {
+                    writer.WriteByte(0);
+                }
             }
 
             public int SectionSize()
             {
-                return 0x04 + 0x04 + 0x04 + 0x02 + 0x02 + NameLength;
+                int baseSize = 0x04 + 0x04 + 0x04 + 0x02 + 0x02 + NameLength;
+                return (baseSize + 3) & ~3;
             }
         }
 
@@ -154,6 +164,7 @@
 
             public _Table(EndianReader reader)
             {
+                long tableStart = reader.Position;
                 reader.PushPosition();
                 Length = reader.ReadUInt32();
                 EntryAmount = reader.ReadUInt16();
@@ -161,7 +172,7 @@
                 Entries = new List<_TableItem>();
 
                 for (int i = 0; i < EntryAmount; i++)
-                    Entries.Add(new _TableItem(reader));
+                    Entries.Add(new _TableItem(reader, tableStart));
             }
 
             //////////////////////////////////////
@@ -169,13 +180,16 @@
 
             public void Write(EndianWriter writer)
             {
-                int tableStart = writer.Position;
+                long tableStart = writer.Position;
 
                 writer.WriteUInt32(Length);
                 writer.WriteUInt16(EntryAmount);
                 writer.WriteUInt16(Padding);
+
                 foreach (_TableItem item in Entries)
-                    item.Write(writer, tableStart);
+                    item.Write(writer, (int)tableStart);
+
+                while ((writer.Position - tableStart) % 4 != 0) writer.WriteByte(0);
             }
 
             public int SectionSize()
@@ -184,7 +198,7 @@
                 foreach (_TableItem item in this.Entries)
                     size += item.SectionSize();
 
-                return size;
+                return (size + 3) & ~3;
             }
         }
 
@@ -196,42 +210,56 @@
             public uint DataSize;
             public Emitter Emitter;
             public Particle Particle;
+            public _AnimationTable AnimationTable;
 
-            public _TableItem(EndianReader reader)
+            public _TableItem(EndianReader reader, long tableStart)
             {
                 NameLength = reader.ReadUInt16();
                 Name = reader.ReadStringNT();
                 DataOffset = reader.ReadUInt32();
                 DataSize = reader.ReadUInt32();
 
-                int tableStartPos = reader.PeekPosition();
-                reader.PushPosition();
-                reader.Position = tableStartPos + (int)DataOffset;
+                long currentPos = reader.Position;
+                reader.Position = (int)(tableStart + DataOffset);
 
                 Emitter = new Emitter(reader);
+
+                while (reader.Position % 4 != 0) reader.Position++;
                 Particle = new Particle(reader);
 
-                reader.Position = reader.PopPosition();
+                while (reader.Position % 4 != 0) reader.Position++;
+
+                int bytesRead = (int)(reader.Position - (tableStart + DataOffset));
+                if (bytesRead < DataSize)
+                {
+                    AnimationTable = new _AnimationTable(reader);
+                }
+
+                reader.Position = (int)currentPos;
             }
 
             //////////////////////////////////////
             //////////////////////////////////////
 
-            public void Write(EndianWriter writer, int tableStart)
+            public void Write(EndianWriter writer, long tableStart)
             {
                 writer.WriteUInt16(NameLength);
                 writer.WriteStringNT(Name);
                 writer.WriteUInt32(DataOffset);
                 writer.WriteUInt32(DataSize);
 
-                // Jump to DataOffset, write subfile bytes, jump back to previous position
-                writer.PushPosition();
-                writer.Position = (int)DataOffset + tableStart;
+                long currentPos = writer.Position;
+
+                writer.Position = (int)(tableStart + DataOffset);
 
                 Emitter.Write(writer);
                 Particle.Write(writer);
+                if (AnimationTable != null)
+                {
+                    AnimationTable.Write(writer);
+                }
 
-                writer.Position = writer.PopPosition();
+                writer.Position = (int)currentPos;
             }
 
             public int SectionSize()
@@ -290,19 +318,13 @@
                 ParticleAnimations = new List<_Animation>();
                 for (int i = 0; i < ParticleAnimationCount; i++)
                 {
-                    reader.PushPosition();
-                    reader.Position = (int)(tableStart + ParticleAnimationPointers[i]);
                     ParticleAnimations.Add(new _Animation(reader));
-                    reader.Position = reader.PopPosition();
                 }
 
                 EmitterAnimations = new List<_Animation>();
                 for (int i = 0; i < EmitterAnimationCount; i++)
                 {
-                    reader.PushPosition();
-                    reader.Position = (int)(tableStart + EmitterAnimationPointers[i]);
                     EmitterAnimations.Add(new _Animation(reader));
-                    reader.Position = reader.PopPosition();
                 }
             }
 
@@ -424,10 +446,14 @@
                 RandomTableData = reader.ReadBytes((int)RandomTableSize);
                 NameTableData = reader.ReadBytes((int)NameTableSize);
                 InfoTableData = reader.ReadBytes((int)InfoTableSize);
+
+                while (reader.Position % 4 != 0) reader.Position++;
             }
 
             public void Write(EndianWriter writer)
             {
+                long startPos = writer.Position;
+
                 writer.WriteByte(Identifier);
                 writer.WriteByte(KindType);
                 writer.WriteByte(CurveFlag);
@@ -455,12 +481,14 @@
                 if (RandomTableSize > 0) writer.WriteBytes(RandomTableData);
                 if (NameTableSize > 0) writer.WriteBytes(NameTableData);
                 if (InfoTableSize > 0) writer.WriteBytes(InfoTableData);
+
+                while ((writer.Position - startPos) % 4 != 0) writer.WriteByte(0);
             }
 
             public int SectionSize()
             {
                 int payloadSize = (int)(KeyTableSize + RangeTableSize + RandomTableSize + NameTableSize + InfoTableSize);
-                return 32 + payloadSize;
+                return (32 + payloadSize + 3) & ~3;
             }
         }
 
@@ -471,7 +499,6 @@
         public _BlockHeader BlockHeader { get; set; }
         public _ProjectHeader ProjectHeader { get; set; }
         public _Table Table { get; set; }
-        public _AnimationTable AnimationTable { get; set; }
         public string Filename { get; set; }
 
         /// <summary>
@@ -484,7 +511,6 @@
             BlockHeader = new _BlockHeader();
             ProjectHeader = new _ProjectHeader();
             Table = new _Table();
-            AnimationTable = new _AnimationTable();
         }
 
         /// <summary>
@@ -502,7 +528,6 @@
                 BlockHeader = new _BlockHeader(reader);
                 ProjectHeader = new _ProjectHeader(reader);
                 Table = new _Table(reader);
-                AnimationTable = new _AnimationTable(reader);
             }
             finally
             {
@@ -521,14 +546,25 @@
             // Header Vars
             int size = Header.SectionSize() + BlockHeader.SectionSize() + ProjectHeader.SectionSize() + Table.SectionSize();
             foreach (_TableItem item in Table.Entries)
+            {
+                item.DataSize = (uint)(item.Emitter.SectionSize() + item.Particle.SectionSize());
+
+                if (item.AnimationTable != null)
+                {
+                    item.DataSize += (uint)item.AnimationTable.SectionSize();
+                }
+
                 size += (int)item.DataSize;
+            }
 
             Header.FileLength = (uint)size;
 
             // BlockHeader Vars
             size = ProjectHeader.SectionSize() + Table.SectionSize();
             foreach (_TableItem item in Table.Entries)
+            {
                 size += (int)item.DataSize;
+            }
 
             BlockHeader.SectionLength = (uint)size;
 
@@ -540,12 +576,12 @@
             Table.EntryAmount = (ushort)Table.Entries.Count;
 
             // Table Items
-            size = Table.SectionSize() + AnimationTable.SectionSize();
+            int currentDataOffset = Table.SectionSize();
             foreach (_TableItem item in Table.Entries)
             {
                 item.NameLength = (ushort)(item.Name.Length + 1);
-                item.DataOffset = (uint)size;
-                size += (int)item.DataSize;
+                item.DataOffset = (uint)currentDataOffset;
+                currentDataOffset += (int)item.DataSize;
             }
         }
 
@@ -567,7 +603,6 @@
                 BlockHeader.Write(writer);
                 ProjectHeader.Write(writer);
                 Table.Write(writer);
-                AnimationTable.Write(writer);
             }
             finally
             {
@@ -602,6 +637,11 @@
             {
                 writer.WriteUInt32(EffectNamePointer);
                 writer.WriteUInt32(Size);
+            }
+
+            public int SectionSize()
+            {
+                return 0x08;
             }
         }
 
@@ -1057,7 +1097,28 @@
 
         public void Write(EndianWriter writer)
         {
+            long startPos = writer.Position;
+
+            Header.Size = (uint)(SectionSize() - Header.SectionSize());
             Header.Write(writer);
+            WriteBody(writer);
+
+            while ((writer.Position - startPos) % 4 != 0) writer.WriteByte(0);
+        }
+
+        public int SectionSize()
+        {
+            using (var ms = new MemoryStream())
+            using (var w = new EndianWriter(ms, Endianness.BigEndian))
+            {
+                WriteBody(w);
+                int unalignedSize = (int)ms.Length + Header.SectionSize();
+                return (unalignedSize + 3) & ~3;
+            }
+        }
+
+        private void WriteBody(EndianWriter writer)
+        {
             EmitData.Write(writer);
             Shader.Write(writer);
             Color.Write(writer);
@@ -1080,6 +1141,11 @@
             public void Write(EndianWriter writer)
             {
                 writer.WriteUInt32(Size);
+            }
+
+            public int SectionSize()
+            {
+                return 0x04;
             }
         }
 
@@ -1145,11 +1211,40 @@
                 RotateOffsetRandom3 = reader.ReadByte();
                 RotateOffset = reader.ReadSingles(3);
                 TexRef1Length = reader.ReadUInt16();
-                TexRef1 = reader.ReadStringNT();
+                if (TexRef1Length > 0)
+                {
+                    long pos = reader.Position;
+                    TexRef1 = reader.ReadStringNT();
+                    reader.Position = (int)(pos + TexRef1Length);
+                }
+                else
+                {
+                    TexRef1 = string.Empty;
+                }
+
                 TexRef2Length = reader.ReadUInt16();
-                TexRef2 = reader.ReadStringNT();
+                if (TexRef2Length > 0)
+                {
+                    long pos = reader.Position;
+                    TexRef2 = reader.ReadStringNT();
+                    reader.Position = (int)(pos + TexRef2Length);
+                }
+                else
+                {
+                    TexRef2 = string.Empty;
+                }
+
                 TexRef3Length = reader.ReadUInt16();
-                TexRef3 = reader.ReadStringNT();
+                if (TexRef3Length > 0)
+                {
+                    long pos = reader.Position;
+                    TexRef3 = reader.ReadStringNT();
+                    reader.Position = (int)(pos + TexRef3Length);
+                }
+                else
+                {
+                    TexRef3 = string.Empty;
+                }
             }
 
             public void Write(EndianWriter writer)
@@ -1180,11 +1275,40 @@
                 writer.WriteByte(RotateOffsetRandom3);
                 writer.WriteSingles(RotateOffset);
                 writer.WriteUInt16(TexRef1Length);
-                writer.WriteStringNT(TexRef1);
+                if (TexRef1Length > 0)
+                {
+                    long startPos = writer.Position;
+                    writer.WriteStringNT(TexRef1);
+
+                    while (writer.Position - startPos < TexRef1Length)
+                    {
+                        writer.WriteByte(0);
+                    }
+                }
+
                 writer.WriteUInt16(TexRef2Length);
-                writer.WriteStringNT(TexRef2);
+                if (TexRef2Length > 0)
+                {
+                    long startPos = writer.Position;
+                    writer.WriteStringNT(TexRef2);
+
+                    while (writer.Position - startPos < TexRef2Length)
+                    {
+                        writer.WriteByte(0);
+                    }
+                }
+
                 writer.WriteUInt16(TexRef3Length);
-                writer.WriteStringNT(TexRef3);
+                if (TexRef3Length > 0)
+                {
+                    long startPos = writer.Position;
+                    writer.WriteStringNT(TexRef3);
+
+                    while (writer.Position - startPos < TexRef3Length)
+                    {
+                        writer.WriteByte(0);
+                    }
+                }
             }
         }
 
@@ -1202,8 +1326,24 @@
 
         public void Write(EndianWriter writer)
         {
+            long startPos = writer.Position;
+
+            Header.Size = (uint)SectionSize();
             Header.Write(writer);
             ParticleData.Write(writer);
+
+            while ((writer.Position - startPos) % 4 != 0) writer.WriteByte(0);
+        }
+
+        public int SectionSize()
+        {
+            using (var ms = new MemoryStream())
+            using (var w = new EndianWriter(ms, Endianness.BigEndian))
+            {
+                ParticleData.Write(w);
+                int unalignedSize = (int)ms.Length + Header.SectionSize();
+                return (unalignedSize + 3) & ~3;
+            }
         }
     }
 }

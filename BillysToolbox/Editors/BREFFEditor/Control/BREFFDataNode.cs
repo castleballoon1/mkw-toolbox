@@ -24,18 +24,6 @@ namespace ParticleEditor.Control
                 SubfileDataNode subfileNode = new SubfileDataNode(item);
                 AddChild(subfileNode);
             }
-
-            if (Breff.AnimationTable.ParticleAnimations.Count <= 0) return;
-
-            DataNode particleAnimsFolder = new DataNode("Particle Animations");
-            particleAnimsFolder.SetImage("folder");
-
-            for (int i = 0; i < Breff.AnimationTable.ParticleAnimations.Count; i++)
-            {
-                particleAnimsFolder.AddChild(new AnimationDataNode(Breff.AnimationTable.ParticleAnimations[i], $"Animation {i}"));
-            }
-
-            AddChild(particleAnimsFolder);
         }
     }
 }
