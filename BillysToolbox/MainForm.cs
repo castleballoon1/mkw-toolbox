@@ -1,6 +1,7 @@
 using BillysToolbox.Editors;
 using BillysToolbox.Tools.ImageScaler;
 using kartlib.Serial;
+using System.Diagnostics;
 using System.Text;
 
 namespace BillysToolbox
@@ -8,7 +9,7 @@ namespace BillysToolbox
     public partial class MainForm : Form
     {
         public Dictionary<string, string> FileTypes = new Dictionary<string, string>()
-        { 
+        {
             { "SZS Files (*.szs)", "*.szs" },
             { "ARC Files (*.arc; *.u8)", "*.arc;*.u8" },
             { "BMM Files (*.bmm)", "*.bmm" },
@@ -29,6 +30,7 @@ namespace BillysToolbox
         public MainForm()
         {
             InitializeComponent();
+            menuStrip.ImageScalingSize = new Size(16, 16);
         }
 
         private void OpenFileEditor()
@@ -187,6 +189,21 @@ namespace BillysToolbox
 
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            string targetUrl = "https://mkwiiki.org/wiki/MKW_Toolbox";
+
+            try
+            {
+                ProcessStartInfo psInfo = new ProcessStartInfo
+                {
+                    FileName = targetUrl,
+                    UseShellExecute = true
+                };
+                Process.Start(psInfo);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not open the link. " + ex.Message);
+            }
         }
 
         private void bMMToolStripMenuItem_Click(object sender, EventArgs e)
@@ -284,6 +301,69 @@ namespace BillysToolbox
             {
                 editor.MdiParent = this;
                 editor.Show();
+            }
+        }
+
+        private void verticalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.LayoutMdi(MdiLayout.TileVertical);
+        }
+
+        private void horizontalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.LayoutMdi(MdiLayout.TileHorizontal);
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            this.LayoutMdi(MdiLayout.Cascade);
+        }
+
+        private void closeAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Form childForm in this.MdiChildren)
+            {
+                childForm.Close();
+            }
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            verticalToolStripMenuItem_Click(sender, e);
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            horizontalToolStripMenuItem_Click(sender, e);
+        }
+
+        private void makeExternalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form activeChild = this.ActiveMdiChild;
+
+            if (activeChild != null)
+            {
+                activeChild.MdiParent = null;
+                activeChild.BringToFront();
+            }
+        }
+
+        private void reattachToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<Form> formsToReattach = new List<Form>();
+
+            foreach (Form openForm in Application.OpenForms)
+            {
+                if (openForm != this && openForm.MdiParent == null && openForm.Visible)
+                {
+                    formsToReattach.Add(openForm);
+                }
+            }
+
+            foreach (Form form in formsToReattach)
+            {
+                form.MdiParent = this;
+                form.BringToFront();
             }
         }
     }
