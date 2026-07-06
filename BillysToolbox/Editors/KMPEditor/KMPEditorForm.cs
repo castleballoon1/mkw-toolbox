@@ -112,7 +112,7 @@ namespace BillysToolbox.Editors
             icons.Images.Add(Properties.Resources.cannon);
             icons.Images.Add(Properties.Resources.coin);
             icons.Images.Add(Properties.Resources.greenshell);
-            icons.ImageSize = new Size(24, 24);
+            icons.ImageSize = new Size(20, 20);
             sectionTree.ImageList = icons;
 
             for (int i = 0; i < sectionTree.Nodes.Count; i++)
