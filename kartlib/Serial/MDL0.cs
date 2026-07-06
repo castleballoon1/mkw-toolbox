@@ -1,4 +1,6 @@
-﻿namespace kartlib.Serial
+﻿using System.Numerics;
+
+namespace kartlib.Serial
 {
     public class MDL0
     {
@@ -260,11 +262,113 @@
             }
         }
 
+        public class _VertexData
+        {
+            public List<Vector3> Vertices;
+
+            public _VertexData(EndianReader reader, int globalDataOffset)
+            {
+                reader.Position = globalDataOffset;
+
+                UInt32 length = reader.ReadUInt32();            // 0x00
+                Int32 mdl0Offset = reader.ReadInt32();          // 0x04
+                Int32 dataOffset = reader.ReadInt32();          // 0x08
+                Int32 nameOffset = reader.ReadInt32();          // 0x0C
+                UInt32 index = reader.ReadUInt32();             // 0x10
+
+                UInt32 componentCount = reader.ReadUInt32();    // 0x14 (0 = XY, 1 = XYZ)
+                UInt32 dataType = reader.ReadUInt32();          // 0x18 (0=U8, 1=S8, 2=U16, 3=S16, 4=Float)
+
+                byte divisor = reader.ReadByte();               // 0x1C
+                byte stride = reader.ReadByte();                // 0x1D
+                UInt16 vertexCount = reader.ReadUInt16();       // 0x1E
+
+                reader.Position = globalDataOffset + dataOffset;
+
+                Vertices = new List<Vector3>();
+
+                if (dataType == 4)
+                {
+                    for (int i = 0; i < vertexCount; i++)
+                    {
+                        float x = reader.ReadSingle();
+                        float y = reader.ReadSingle();
+                        float z = 0f;
+
+                        if (componentCount == 1)
+                        {
+                            z = reader.ReadSingle();
+                        }
+
+                        Vertices.Add(new Vector3(x, y, z));
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Unsupported vertex data type: {dataType}. Only Float (4) is currently supported.");
+                }
+            }
+        }
+
+        public class _Bone
+        {
+            public string Name;
+            public int AbsoluteDataPosition;
+
+            public int FlagsOffset => AbsoluteDataPosition + 0x14;
+            public int ScaleOffset => AbsoluteDataPosition + 0x20;
+            public int RotationOffset => AbsoluteDataPosition + 0x2C;
+            public int TranslationOffset => AbsoluteDataPosition + 0x38;
+            public int BoxMinOffset => AbsoluteDataPosition + 0x44;
+            public int BoxMaxOffset => AbsoluteDataPosition + 0x50;
+
+            public _Bone(EndianReader reader, BRRES._IndexGroupEntry entry)
+            {
+                AbsoluteDataPosition = entry.GlobalDataOffset;
+
+                int tempPos = reader.Position;
+                reader.Position = entry.GlobalNameOffset - 4;
+                Name = reader.ReadString(reader.ReadInt32());
+                reader.Position = tempPos;
+            }
+        }
+
+        /////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+
+        public List<_Bone> Bones { get; set; }
+        public List<_VertexData> VertexGroups { get; set; }
+
         public MDL0(EndianReader reader)
         {
             _Header header = new _Header(reader);
             _MDL0Header mdl0Header = new _MDL0Header(reader);
             _BoneLinkTable boneLinkTable = new _BoneLinkTable(reader);
+
+            Bones = new List<_Bone>();
+            VertexGroups = new List<_VertexData>();
+
+            if (header.SectionOffsets[1] != 0)
+            {
+                reader.Position = header.SectionOffsets[1] - header.ParentArchiveOffset;
+                BRRES._IndexGroup boneIndexGroup = new BRRES._IndexGroup(reader);
+
+                for (int i = 1; i <= boneIndexGroup.EntryCount; i++)
+                {
+                    Bones.Add(new _Bone(reader, boneIndexGroup[i]));
+                }
+            }
+
+            if (header.SectionOffsets[2] != 0)
+            {
+                reader.Position = header.SectionOffsets[2] - header.ParentArchiveOffset;
+                BRRES._IndexGroup vertexIndexGroup = new BRRES._IndexGroup(reader);
+
+                for (int i = 1; i <= vertexIndexGroup.EntryCount; i++)
+                {
+                    VertexGroups.Add(new _VertexData(reader, vertexIndexGroup[i].GlobalDataOffset));
+                }
+            }
 
             // Definition section
             reader.Position = header.SectionOffsets[0] - header.ParentArchiveOffset;
