@@ -76,6 +76,9 @@
             toolStripButton3 = new ToolStripButton();
             toolStripButton4 = new ToolStripButton();
             toolStripButton7 = new ToolStripButton();
+            toolStripSeparator4 = new ToolStripSeparator();
+            toolStripButton5 = new ToolStripButton();
+            toolStripButton6 = new ToolStripButton();
             menuStrip.SuspendLayout();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -361,7 +364,7 @@
             // 
             aboutToolStripMenuItem1.Image = Properties.Resources.help;
             aboutToolStripMenuItem1.Name = "aboutToolStripMenuItem1";
-            aboutToolStripMenuItem1.Size = new Size(107, 22);
+            aboutToolStripMenuItem1.Size = new Size(180, 22);
             aboutToolStripMenuItem1.Text = "About";
             aboutToolStripMenuItem1.Click += aboutToolStripMenuItem1_Click;
             // 
@@ -369,13 +372,13 @@
             // 
             helpToolStripMenuItem.Image = Properties.Resources.kmp;
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            helpToolStripMenuItem.Size = new Size(107, 22);
+            helpToolStripMenuItem.Size = new Size(180, 22);
             helpToolStripMenuItem.Text = "Help";
             helpToolStripMenuItem.Click += helpToolStripMenuItem_Click;
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { saveToolStripButton, toolStripButton2, openToolStripButton, toolStripSeparator2, toolStripButton1, toolStripButton3, toolStripButton4, toolStripButton7 });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { openToolStripButton, saveToolStripButton, toolStripButton2, toolStripSeparator2, toolStripButton1, toolStripButton3, toolStripButton4, toolStripButton7, toolStripSeparator4, toolStripButton5, toolStripButton6 });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(1237, 25);
@@ -457,6 +460,31 @@
             toolStripButton7.Text = "Reattach All";
             toolStripButton7.Click += toolStripButton7_Click;
             // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(6, 25);
+            // 
+            // toolStripButton5
+            // 
+            toolStripButton5.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButton5.Image = Properties.Resources.help;
+            toolStripButton5.ImageTransparentColor = Color.Magenta;
+            toolStripButton5.Name = "toolStripButton5";
+            toolStripButton5.Size = new Size(23, 22);
+            toolStripButton5.Text = "About";
+            toolStripButton5.Click += toolStripButton5_Click_1;
+            // 
+            // toolStripButton6
+            // 
+            toolStripButton6.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButton6.Image = Properties.Resources.kmp;
+            toolStripButton6.ImageTransparentColor = Color.Magenta;
+            toolStripButton6.Name = "toolStripButton6";
+            toolStripButton6.Size = new Size(23, 22);
+            toolStripButton6.Text = "Help";
+            toolStripButton6.Click += toolStripButton6_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -528,5 +556,8 @@
         private ToolStripMenuItem magicMinimapToolStripMenuItem;
         private ToolStripButton toolStripButton4;
         private ToolStripButton toolStripButton7;
+        private ToolStripSeparator toolStripSeparator4;
+        private ToolStripButton toolStripButton5;
+        private ToolStripButton toolStripButton6;
     }
 }
