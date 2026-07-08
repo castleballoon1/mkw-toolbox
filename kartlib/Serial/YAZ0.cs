@@ -112,7 +112,7 @@
 
                     if (progress != null)
                     {
-                        int currentProgress = (int)((position * 100L) / data.Length);
+                        int currentProgress = (int)(position * 100L / data.Length);
                         if (currentProgress != lastProgress)
                         {
                             progress.Report(currentProgress);

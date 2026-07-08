@@ -378,71 +378,10 @@ namespace BillysToolbox
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     string filePath = ofd.FileName;
-                    string extension = Path.GetExtension(filePath).ToLower();
-
-                    try
-                    {
-                        if (extension == ".brres")
-                        {
-                            ProcessBrresDirectly(filePath);
-                        }
-                        else if (extension == ".szs" || extension == ".arc" || extension == ".u8")
-                        {
-                            ProcessU8Archive(filePath);
-                        }
-
-                        MessageBox.Show("Minimap successfully aligned and saved!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    MagicMinimapProgressForm progressForm = new MagicMinimapProgressForm(filePath);
+                    progressForm.Show();
                 }
             }
-        }
-
-        private void ProcessBrresDirectly(string filePath)
-        {
-            byte[] fileBytes = File.ReadAllBytes(filePath);
-            byte[] modifiedBytes = MinimapHelper.ExecuteMinimapAlignment(fileBytes);
-            File.WriteAllBytes(filePath, modifiedBytes);
-        }
-
-        private void ProcessU8Archive(string filePath)
-        {
-            byte[] fileBytes = File.ReadAllBytes(filePath);
-            bool isYaz0 = false;
-
-            if (fileBytes.Length >= 4 &&
-                fileBytes[0] == 0x59 && fileBytes[1] == 0x61 &&
-                fileBytes[2] == 0x7A && fileBytes[3] == 0x30)
-            {
-                isYaz0 = true;
-                fileBytes = YAZ0.Decompress(fileBytes);
-            }
-
-            U8 archive = new U8(fileBytes, filePath);
-            int nodeIndex = archive.FindIndexFromName("map_model.brres");
-
-            if (nodeIndex == -1)
-            {
-                throw new Exception("The selected archive does not contain a 'map_model.brres' file.");
-            }
-
-            U8._Node mapModelNode = archive.Nodes[nodeIndex];
-
-            byte[] modifiedBrresBytes = MinimapHelper.ExecuteMinimapAlignment(mapModelNode.Data);
-
-            mapModelNode.Data = modifiedBrresBytes;
-
-            byte[] repackedArchive = archive.Write();
-
-            if (isYaz0)
-            {
-                repackedArchive = YAZ0.Compress(repackedArchive);
-            }
-
-            File.WriteAllBytes(filePath, repackedArchive);
         }
 
         private void toolStripButton4_Click(object sender, EventArgs e)

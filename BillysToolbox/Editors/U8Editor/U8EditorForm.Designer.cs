@@ -68,6 +68,21 @@
             importFilesToolStripMenuItem1 = new ToolStripMenuItem();
             newFolderToolStripMenuItem1 = new ToolStripMenuItem();
             blankRightClick = new ContextMenuStrip(components);
+            mapModelRightClick = new ContextMenuStrip(components);
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripMenuItem();
+            toolStripMenuItem3 = new ToolStripMenuItem();
+            toolStripSeparator7 = new ToolStripSeparator();
+            toolStripMenuItem4 = new ToolStripMenuItem();
+            toolStripMenuItem5 = new ToolStripMenuItem();
+            toolStripSeparator8 = new ToolStripSeparator();
+            toolStripMenuItem6 = new ToolStripMenuItem();
+            toolStripMenuItem7 = new ToolStripMenuItem();
+            toolStripMenuItem8 = new ToolStripMenuItem();
+            toolStripSeparator9 = new ToolStripSeparator();
+            toolStripMenuItem9 = new ToolStripMenuItem();
+            toolStripSeparator10 = new ToolStripSeparator();
+            magicMinimapToolStripItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
@@ -76,6 +91,7 @@
             fileRightClick.SuspendLayout();
             folderRightClick.SuspendLayout();
             blankRightClick.SuspendLayout();
+            mapModelRightClick.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainer
@@ -367,6 +383,103 @@
             blankRightClick.Name = "blankRightClick";
             blankRightClick.Size = new Size(152, 48);
             // 
+            // mapModelRightClick
+            // 
+            mapModelRightClick.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem2, toolStripMenuItem3, toolStripSeparator7, toolStripMenuItem4, toolStripMenuItem5, toolStripSeparator8, magicMinimapToolStripItem, toolStripSeparator10, toolStripMenuItem6, toolStripMenuItem7, toolStripMenuItem8, toolStripSeparator9, toolStripMenuItem9 });
+            mapModelRightClick.Name = "contextMenuStrip1";
+            mapModelRightClick.Size = new Size(181, 270);
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Image = Properties.Resources.page_copy;
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(180, 22);
+            toolStripMenuItem1.Text = "Copy";
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Image = Properties.Resources.cut;
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(180, 22);
+            toolStripMenuItem2.Text = "Cut";
+            // 
+            // toolStripMenuItem3
+            // 
+            toolStripMenuItem3.Image = Properties.Resources.page_paste;
+            toolStripMenuItem3.Name = "toolStripMenuItem3";
+            toolStripMenuItem3.Size = new Size(180, 22);
+            toolStripMenuItem3.Text = "Paste";
+            // 
+            // toolStripSeparator7
+            // 
+            toolStripSeparator7.Name = "toolStripSeparator7";
+            toolStripSeparator7.Size = new Size(177, 6);
+            // 
+            // toolStripMenuItem4
+            // 
+            toolStripMenuItem4.Image = Properties.Resources.textfield;
+            toolStripMenuItem4.Name = "toolStripMenuItem4";
+            toolStripMenuItem4.Size = new Size(180, 22);
+            toolStripMenuItem4.Text = "Rename";
+            // 
+            // toolStripMenuItem5
+            // 
+            toolStripMenuItem5.Image = Properties.Resources.cross;
+            toolStripMenuItem5.Name = "toolStripMenuItem5";
+            toolStripMenuItem5.Size = new Size(180, 22);
+            toolStripMenuItem5.Text = "Delete";
+            // 
+            // toolStripSeparator8
+            // 
+            toolStripSeparator8.Name = "toolStripSeparator8";
+            toolStripSeparator8.Size = new Size(177, 6);
+            // 
+            // toolStripMenuItem6
+            // 
+            toolStripMenuItem6.Image = Properties.Resources.document_export;
+            toolStripMenuItem6.Name = "toolStripMenuItem6";
+            toolStripMenuItem6.Size = new Size(180, 22);
+            toolStripMenuItem6.Text = "Export file(s)...";
+            // 
+            // toolStripMenuItem7
+            // 
+            toolStripMenuItem7.Image = Properties.Resources.document_import;
+            toolStripMenuItem7.Name = "toolStripMenuItem7";
+            toolStripMenuItem7.Size = new Size(180, 22);
+            toolStripMenuItem7.Text = "Import file(s)...";
+            // 
+            // toolStripMenuItem8
+            // 
+            toolStripMenuItem8.Image = Properties.Resources.page_white_edit;
+            toolStripMenuItem8.Name = "toolStripMenuItem8";
+            toolStripMenuItem8.Size = new Size(180, 22);
+            toolStripMenuItem8.Text = "Replace file...";
+            // 
+            // toolStripSeparator9
+            // 
+            toolStripSeparator9.Name = "toolStripSeparator9";
+            toolStripSeparator9.Size = new Size(177, 6);
+            // 
+            // toolStripMenuItem9
+            // 
+            toolStripMenuItem9.Image = Properties.Resources.folder_add;
+            toolStripMenuItem9.Name = "toolStripMenuItem9";
+            toolStripMenuItem9.Size = new Size(180, 22);
+            toolStripMenuItem9.Text = "New folder";
+            // 
+            // toolStripSeparator10
+            // 
+            toolStripSeparator10.Name = "toolStripSeparator10";
+            toolStripSeparator10.Size = new Size(177, 6);
+            // 
+            // magicMinimapToolStripItem
+            // 
+            magicMinimapToolStripItem.Image = (Image)resources.GetObject("magicMinimapToolStripItem.Image");
+            magicMinimapToolStripItem.Name = "magicMinimapToolStripItem";
+            magicMinimapToolStripItem.Size = new Size(180, 22);
+            magicMinimapToolStripItem.Text = "Magic Minimap";
+            magicMinimapToolStripItem.Click += magicMinimapToolStripItem_Click;
+            // 
             // U8EditorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -388,6 +501,7 @@
             fileRightClick.ResumeLayout(false);
             folderRightClick.ResumeLayout(false);
             blankRightClick.ResumeLayout(false);
+            mapModelRightClick.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -432,5 +546,20 @@
         private ToolStripProgressBar compressProgressBar;
         private ToolStripStatusLabel spacer;
         private ToolStripStatusLabel compressLabel;
+        private ContextMenuStrip mapModelRightClick;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem toolStripMenuItem2;
+        private ToolStripMenuItem toolStripMenuItem3;
+        private ToolStripSeparator toolStripSeparator7;
+        private ToolStripMenuItem toolStripMenuItem4;
+        private ToolStripMenuItem toolStripMenuItem5;
+        private ToolStripSeparator toolStripSeparator8;
+        private ToolStripMenuItem magicMinimapToolStripItem;
+        private ToolStripSeparator toolStripSeparator10;
+        private ToolStripMenuItem toolStripMenuItem6;
+        private ToolStripMenuItem toolStripMenuItem7;
+        private ToolStripMenuItem toolStripMenuItem8;
+        private ToolStripSeparator toolStripSeparator9;
+        private ToolStripMenuItem toolStripMenuItem9;
     }
 }

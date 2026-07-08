@@ -399,9 +399,20 @@ namespace BillysToolbox.Editors
                 if (e.Button == MouseButtons.Right)
                 {
                     if (Nodes[(int)item.Tag].Type == U8._Node.NodeType.File)
-                        fileRightClick.Show(Cursor.Position);
+                    {
+                        if (Nodes[(int)item.Tag].Name.Equals("map_model.brres", StringComparison.OrdinalIgnoreCase))
+                        {
+                            mapModelRightClick.Show(Cursor.Position);
+                        }
+                        else
+                        {
+                            fileRightClick.Show(Cursor.Position);
+                        }
+                    }
                     else
+                    {
                         folderRightClick.Show(Cursor.Position);
+                    }
                 }
             }
         }
@@ -772,6 +783,29 @@ namespace BillysToolbox.Editors
                 if (result == DialogResult.No)
                 {
                     e.Cancel = true;
+                }
+            }
+        }
+
+        private void magicMinimapToolStripItem_Click(object sender, EventArgs e)
+        {
+            if (fileListView.SelectedItems.Count == 0) return;
+
+            ListViewItem item = fileListView.SelectedItems[0];
+            int nodeIndex = (int)item.Tag;
+
+            if (Nodes[nodeIndex].Data != null &&
+                Nodes[nodeIndex].Name.Equals("map_model.brres", StringComparison.OrdinalIgnoreCase))
+            {
+                byte[] fileBytes = Nodes[nodeIndex].Data;
+
+                using (var dialog = new Tools.MagicMinimap.MagicMinimapProgressForm(fileBytes))
+                {
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        Nodes[nodeIndex].Data = dialog.BrresFileBytes;
+                        item.SubItems[1].Text = Nodes[nodeIndex].Data.Length.ToString();
+                    }
                 }
             }
         }

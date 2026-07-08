@@ -129,7 +129,23 @@
   <metadata name="blankRightClick.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>420, 18</value>
   </metadata>
+  <metadata name="mapModelRightClick.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>586, 17</value>
+  </metadata>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="magicMinimapToolStripItem.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAABaklEQVQ4T2MgBignrS+CMlHA
+        ////oSwgEHCf8J/PbQKSCAKopGzAKg43QMhj4v/C3ff/n3325T+7Qw9csWTU6gL5+HX/hU2iwzUzN//X
+        z9+O4hIUA/ynnfmfvunm/xOPP/9nsoe7RAyIjaEuMAZicZAgDCB7wZjfpe+/z5Qz/1O33vt/8s7L/2GB
+        XnBZmaAJvVAmCkAJAyAw5nGd9N+rfM7/+OiI/xcunP8fEuiH7BIMgG4ACBgnRvj993Bz+R8bl/D//IWL
+        yIZgABQDlJM3FkCZxjGRof/d3dzhhgQFBWI1BMUAlZSNyIqAhoT/d3fHbwjYAJnIlUUK8WuhUbXlv07B
+        HrhLoqIigIZ44DQE5gJQ1BirIqIKOcCAhkThNATFC/JBfX1QJjrAYkgQWCeKAUCAkkjQAJIhif8vXrr8
+        PywsFKgf1QBCAG5IYlLq/4iICJINAAGwIZGRkSCdxuQYAAKggAZhYBj8ZwAAW5PkRryi+HMAAAAASUVO
+        RK5CYII=
+</value>
+  </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         AAABAAUAEBAAAAEAIABoBAAAVgAAABgYAAABACAAiAkAAL4EAAAgIAAAAQAgAKgQAABGDgAAMDAAAAEA
