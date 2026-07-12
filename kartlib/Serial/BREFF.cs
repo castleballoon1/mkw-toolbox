@@ -296,32 +296,6 @@ namespace kartlib.Serial
             Random = 3
         }
 
-        public enum KeyCurveType : byte
-        {
-            Linear = 1,
-            Hermite = 2,
-            Step = 3
-        }
-
-        public class ColorAnimationFrame
-        {
-            public byte R { get; set; }
-            public byte G { get; set; }
-            public byte B { get; set; }
-            public byte A { get; set; }
-
-            public override string ToString() => $"R: {R}, G: {G}, B: {B}, A: {A}";
-        }
-
-        public class VectorAnimationFrame
-        {
-            public float X { get; set; }
-            public float Y { get; set; }
-            public float Z { get; set; }
-
-            public override string ToString() => $"X: {X:F2}, Y: {Y:F2}, Z: {Z:F2}";
-        }
-
         public class _AnimationTable
         {
             public ushort ParticleAnimationCount;
@@ -500,7 +474,6 @@ namespace kartlib.Serial
                 uint nameTableSize = reader.ReadUInt32();
                 uint infoTableSize = reader.ReadUInt32();
 
-                // Safely extract tables to avoid F32 vs U8 EOF exceptions
                 KeyTableData = reader.ReadBytes((int)keyTableSize);
                 RangeTableData = reader.ReadBytes((int)rangeTableSize);
                 RandomTableData = reader.ReadBytes((int)randomTableSize);
