@@ -384,16 +384,6 @@ namespace BillysToolbox
             }
         }
 
-        private void toolStripButton4_Click(object sender, EventArgs e)
-        {
-            makeExternalToolStripMenuItem_Click(sender, e);
-        }
-
-        private void toolStripButton7_Click(object sender, EventArgs e)
-        {
-            reattachToolStripMenuItem_Click(sender, e);
-        }
-
         private void toolStripButton5_Click_1(object sender, EventArgs e)
         {
             aboutToolStripMenuItem1_Click(sender, e);
