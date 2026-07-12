@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using static kartlib.Serial.BREFF;
 
 namespace kartlib.Serial
 {
@@ -268,6 +270,58 @@ namespace kartlib.Serial
             }
         }
 
+        public enum AnimationFormat : byte
+        {
+            Baked = 0xAB,
+            Keyed = 0xAC
+        }
+
+        public enum AnimType : byte
+        {
+            ParticleU8 = 0,
+            PostField = 2,
+            ParticleF32 = 3,
+            ParticleTexture = 4,
+            Child = 5,
+            ParticleRotate = 6,
+            Field = 7,
+            EmitterF32 = 11
+        }
+
+        public enum KeyType : byte
+        {
+            None = 0,
+            Fixed = 1,
+            Range = 2,
+            Random = 3
+        }
+
+        public enum KeyCurveType : byte
+        {
+            Linear = 1,
+            Hermite = 2,
+            Step = 3
+        }
+
+        public class ColorAnimationFrame
+        {
+            public byte R { get; set; }
+            public byte G { get; set; }
+            public byte B { get; set; }
+            public byte A { get; set; }
+
+            public override string ToString() => $"R: {R}, G: {G}, B: {B}, A: {A}";
+        }
+
+        public class VectorAnimationFrame
+        {
+            public float X { get; set; }
+            public float Y { get; set; }
+            public float Z { get; set; }
+
+            public override string ToString() => $"X: {X:F2}, Y: {Y:F2}, Z: {Z:F2}";
+        }
+
         public class _AnimationTable
         {
             public ushort ParticleAnimationCount;
@@ -401,33 +455,38 @@ namespace kartlib.Serial
 
         public class _Animation
         {
-            public byte Identifier;
-            public byte KindType;
-            public byte CurveFlag;
-            public byte KindEnable;
-            public byte ProcessFlag;
-            public byte LoopCount;
-            public ushort RandomSeed;
-            public ushort FrameCount;
-            public ushort Padding;
+            [Category("Header")]
+            public byte Identifier { get; set; }
+            [Category("Header")]
+            public byte KindType { get; set; }
+            [Category("Header")]
+            public AnimType CurveFlag { get; set; }
+            [Category("Header")]
+            public byte KindEnable { get; set; }
+            [Category("Playback")]
+            public byte ProcessFlag { get; set; }
+            [Category("Playback")]
+            public byte LoopCount { get; set; }
+            [Category("Playback")]
+            public ushort RandomSeed { get; set; }
+            [Category("Playback")]
+            public ushort FrameCount { get; set; }
+            [Category("Header")]
+            public ushort Padding { get; set; }
 
-            public uint KeyTableSize;
-            public uint RangeTableSize;
-            public uint RandomTableSize;
-            public uint NameTableSize;
-            public uint InfoTableSize;
+            [Category("Animation Data")]
+            public List<string> TargetNames { get; set; } = new List<string>();
 
-            public byte[] KeyTableData;
-            public byte[] RangeTableData;
-            public byte[] RandomTableData;
-            public byte[] NameTableData;
-            public byte[] InfoTableData;
+            [Browsable(false)] public byte[] KeyTableData { get; set; } = Array.Empty<byte>();
+            [Browsable(false)] public byte[] RangeTableData { get; set; } = Array.Empty<byte>();
+            [Browsable(false)] public byte[] RandomTableData { get; set; } = Array.Empty<byte>();
+            [Browsable(false)] public byte[] InfoTableData { get; set; } = Array.Empty<byte>();
 
             public _Animation(EndianReader reader)
             {
                 Identifier = reader.ReadByte();
                 KindType = reader.ReadByte();
-                CurveFlag = reader.ReadByte();
+                CurveFlag = (AnimType)reader.ReadByte();
                 KindEnable = reader.ReadByte();
                 ProcessFlag = reader.ReadByte();
                 LoopCount = reader.ReadByte();
@@ -435,17 +494,36 @@ namespace kartlib.Serial
                 FrameCount = reader.ReadUInt16();
                 Padding = reader.ReadUInt16();
 
-                KeyTableSize = reader.ReadUInt32();
-                RangeTableSize = reader.ReadUInt32();
-                RandomTableSize = reader.ReadUInt32();
-                NameTableSize = reader.ReadUInt32();
-                InfoTableSize = reader.ReadUInt32();
+                uint keyTableSize = reader.ReadUInt32();
+                uint rangeTableSize = reader.ReadUInt32();
+                uint randomTableSize = reader.ReadUInt32();
+                uint nameTableSize = reader.ReadUInt32();
+                uint infoTableSize = reader.ReadUInt32();
 
-                KeyTableData = reader.ReadBytes((int)KeyTableSize);
-                RangeTableData = reader.ReadBytes((int)RangeTableSize);
-                RandomTableData = reader.ReadBytes((int)RandomTableSize);
-                NameTableData = reader.ReadBytes((int)NameTableSize);
-                InfoTableData = reader.ReadBytes((int)InfoTableSize);
+                // Safely extract tables to avoid F32 vs U8 EOF exceptions
+                KeyTableData = reader.ReadBytes((int)keyTableSize);
+                RangeTableData = reader.ReadBytes((int)rangeTableSize);
+                RandomTableData = reader.ReadBytes((int)randomTableSize);
+
+                if (nameTableSize > 0)
+                {
+                    long startPos = reader.Position;
+                    ushort entryCount = reader.ReadUInt16();
+                    reader.ReadUInt16();
+
+                    uint[] nameOffsets = new uint[entryCount];
+                    for (int i = 0; i < entryCount; i++)
+                        nameOffsets[i] = reader.ReadUInt32();
+
+                    for (int i = 0; i < entryCount; i++)
+                    {
+                        reader.Position = (int)(startPos + nameOffsets[i]);
+                        TargetNames.Add(reader.ReadStringNT());
+                    }
+                    reader.Position = (int)(startPos + nameTableSize);
+                }
+
+                InfoTableData = reader.ReadBytes((int)infoTableSize);
 
                 while (reader.Position % 4 != 0) reader.Position++;
             }
@@ -456,7 +534,7 @@ namespace kartlib.Serial
 
                 writer.WriteByte(Identifier);
                 writer.WriteByte(KindType);
-                writer.WriteByte(CurveFlag);
+                writer.WriteByte((byte)CurveFlag);
                 writer.WriteByte(KindEnable);
                 writer.WriteByte(ProcessFlag);
                 writer.WriteByte(LoopCount);
@@ -464,31 +542,75 @@ namespace kartlib.Serial
                 writer.WriteUInt16(FrameCount);
                 writer.WriteUInt16(Padding);
 
-                KeyTableSize = (uint)(KeyTableData?.Length ?? 0);
-                RangeTableSize = (uint)(RangeTableData?.Length ?? 0);
-                RandomTableSize = (uint)(RandomTableData?.Length ?? 0);
-                NameTableSize = (uint)(NameTableData?.Length ?? 0);
-                InfoTableSize = (uint)(InfoTableData?.Length ?? 0);
+                uint keyTableSize = (uint)(KeyTableData?.Length ?? 0);
+                uint rangeTableSize = (uint)(RangeTableData?.Length ?? 0);
+                uint randomTableSize = (uint)(RandomTableData?.Length ?? 0);
 
-                writer.WriteUInt32(KeyTableSize);
-                writer.WriteUInt32(RangeTableSize);
-                writer.WriteUInt32(RandomTableSize);
-                writer.WriteUInt32(NameTableSize);
-                writer.WriteUInt32(InfoTableSize);
+                uint nameTableSize = 0;
+                if (TargetNames.Count > 0)
+                {
+                    nameTableSize = (uint)(4 + (TargetNames.Count * 4) + TargetNames.Sum(n => n.Length + 1));
+                    nameTableSize = (nameTableSize + 3) & ~3u;
+                }
 
-                if (KeyTableSize > 0) writer.WriteBytes(KeyTableData);
-                if (RangeTableSize > 0) writer.WriteBytes(RangeTableData);
-                if (RandomTableSize > 0) writer.WriteBytes(RandomTableData);
-                if (NameTableSize > 0) writer.WriteBytes(NameTableData);
-                if (InfoTableSize > 0) writer.WriteBytes(InfoTableData);
+                uint infoTableSize = (uint)(InfoTableData?.Length ?? 0);
+
+                writer.WriteUInt32(keyTableSize);
+                writer.WriteUInt32(rangeTableSize);
+                writer.WriteUInt32(randomTableSize);
+                writer.WriteUInt32(nameTableSize);
+                writer.WriteUInt32(infoTableSize);
+
+                if (keyTableSize > 0) writer.WriteBytes(KeyTableData);
+                if (rangeTableSize > 0) writer.WriteBytes(RangeTableData);
+                if (randomTableSize > 0) writer.WriteBytes(RandomTableData);
+
+                if (nameTableSize > 0)
+                {
+                    long stringTableStart = writer.Position;
+                    writer.WriteUInt16((ushort)TargetNames.Count);
+                    writer.WriteUInt16(0);
+
+                    long offsetTablePos = writer.Position;
+                    writer.WriteBytes(new byte[TargetNames.Count * 4]);
+
+                    uint[] offsets = new uint[TargetNames.Count];
+                    for (int i = 0; i < TargetNames.Count; i++)
+                    {
+                        offsets[i] = (uint)(writer.Position - stringTableStart);
+                        writer.WriteStringNT(TargetNames[i]);
+                    }
+
+                    long endingPos = writer.Position;
+                    writer.Position = (int)offsetTablePos;
+                    foreach (uint off in offsets) writer.WriteUInt32(off);
+
+                    writer.Position = (int)endingPos;
+                    while ((writer.Position - stringTableStart) % 4 != 0) writer.WriteByte(0);
+                }
+
+                if (infoTableSize > 0) writer.WriteBytes(InfoTableData);
 
                 while ((writer.Position - startPos) % 4 != 0) writer.WriteByte(0);
             }
 
             public int SectionSize()
             {
-                int payloadSize = (int)(KeyTableSize + RangeTableSize + RandomTableSize + NameTableSize + InfoTableSize);
-                return (32 + payloadSize + 3) & ~3;
+                uint keyTableSize = (uint)(KeyTableData?.Length ?? 0);
+                uint nameTableSize = 0;
+                if (TargetNames.Count > 0)
+                {
+                    nameTableSize = (uint)(4 + (TargetNames.Count * 4) + TargetNames.Sum(n => n.Length + 1));
+                    nameTableSize = (nameTableSize + 3) & ~3u;
+                }
+
+                long payloadSize = keyTableSize +
+                                  (RangeTableData?.Length ?? 0) +
+                                  (RandomTableData?.Length ?? 0) +
+                                  nameTableSize +
+                                  (InfoTableData?.Length ?? 0);
+
+                return (int)((32 + payloadSize + 3) & ~3);
             }
         }
 
