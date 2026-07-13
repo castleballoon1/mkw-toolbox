@@ -9,7 +9,7 @@ namespace ParticleEditor.Control
     {
         internal _Animation AnimationItem;
 
-        [Category("Animation Data"), Description("Launch the dedicated editor for timeline Keyframes.")]
+        [Category("Animation Data"), Description("Launch the keyframe editor.")]
         [Editor(typeof(KeyframeUIEditor), typeof(UITypeEditor))]
         public string EditKeyframes
         {
@@ -35,7 +35,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Animation Data"), Description("Launch the dedicated editor for Child Spawn Events.")]
+        [Category("Animation Data"), Description("Launch the child event editor.")]
         [Editor(typeof(ChildEventUIEditor), typeof(UITypeEditor))]
         public string ChildEvents
         {
@@ -46,7 +46,7 @@ namespace ParticleEditor.Control
             set { }
         }
 
-        [Category("General Info"), Description("Changes the data format between raw pre-calculated frames (Baked) or timeline paths (Keyed).")]
+        [Category("General Info"), Description("Changes the data format between raw pre-calculated frames (Baked) or keyframes (Keyed).")]
         [RefreshProperties(RefreshProperties.All)]
         public AnimationFormat Format
         {
@@ -123,7 +123,7 @@ namespace ParticleEditor.Control
         }
 
         [Category("Configuration"), Description("The broad target category of the animation.")]
-        public BREFF.AnimType CurveFlag
+        public AnimType CurveFlag
         {
             get { return AnimationItem.CurveFlag; }
             set { AnimationItem.CurveFlag = value; }
@@ -162,7 +162,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Synchronizes the animation's random generation seed changes.")]
+        [Category("Process Flags")]
         public bool SyncRandomSeed
         {
             get { return (AnimationItem.ProcessFlag & (1 << 2)) > 0; }
@@ -173,7 +173,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Forces the animation processing loop to freeze completely.")]
+        [Category("Process Flags")]
         public bool IsStopped
         {
             get { return (AnimationItem.ProcessFlag & (1 << 3)) > 0; }
@@ -184,7 +184,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Forces calculations to execute inside Emitter Time scales rather than global particle ticks.")]
+        [Category("Process Flags")]
         public bool UseEmitterTiming
         {
             get { return (AnimationItem.ProcessFlag & (1 << 4)) > 0; }
@@ -195,7 +195,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Forces the timeline to loop indefinitely.")]
+        [Category("Process Flags")]
         public bool LoopInfinitely
         {
             get { return (AnimationItem.ProcessFlag & (1 << 5)) > 0; }
@@ -206,7 +206,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Toggles repeating loop style if looping logic is actively applied.")]
+        [Category("Process Flags")]
         public bool LoopByRepeating
         {
             get { return (AnimationItem.ProcessFlag & (1 << 6)) > 0; }
@@ -217,7 +217,7 @@ namespace ParticleEditor.Control
             }
         }
 
-        [Category("Process Flags"), Description("Performs timeline expanding and contraction warping tailored directly to the parent asset lifetime metrics.")]
+        [Category("Process Flags")]
         public bool EnableLifetimeFitting
         {
             get { return (AnimationItem.ProcessFlag & (1 << 7)) > 0; }
