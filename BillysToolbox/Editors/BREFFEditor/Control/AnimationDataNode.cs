@@ -1,6 +1,7 @@
 ﻿using kartlib.Serial;
 using System.ComponentModel;
 using System.Drawing.Design;
+using static kartlib.Serial.BREFF;
 
 namespace ParticleEditor.Control
 {
@@ -8,13 +9,36 @@ namespace ParticleEditor.Control
     {
         internal BREFF._Animation AnimationItem;
 
+        [Category("Animation Data"), Description("Launch the dedicated editor for timeline Keyframes.")]
+        [Editor(typeof(KeyframeUIEditor), typeof(UITypeEditor))]
+        public string EditKeyframes
+        {
+            get
+            {
+                if (CurveFlag == BREFF.AnimType.Child || CurveFlag == BREFF.AnimType.Field)
+                    return "N/A";
+
+                return "...";
+            }
+            set { }
+        }
+
+        [Category("Animation Data"), Description("Environmental physics forces. This menu is only valid if CurveFlag is set to 'Field'.")]
+        public FieldSettings PhysicsField
+        {
+            get
+            {
+                return new FieldSettings(AnimationItem);
+            }
+        }
+
         [Category("Animation Data"), Description("Launch the dedicated editor for Child Spawn Events.")]
         [Editor(typeof(ChildEventUIEditor), typeof(UITypeEditor))]
         public string ChildEvents
         {
             get
             {
-                return CurveFlag == BREFF.AnimType.Child ? "(Click to Edit Child Events)" : "N/A";
+                return CurveFlag == BREFF.AnimType.Child ? "..." : "N/A";
             }
             set { }
         }
@@ -187,5 +211,157 @@ namespace ParticleEditor.Control
             this.AnimationItem = animItem;
             SetImage("page");
         }
+    }
+
+    [TypeConverter(typeof(FieldSettingsConverter))]
+    public class FieldSettings
+    {
+        private kartlib.Serial.BREFF._Animation _anim;
+
+        public FieldSettings(kartlib.Serial.BREFF._Animation anim)
+        {
+            _anim = anim;
+            if (_anim.InfoTableData == null || _anim.InfoTableData.Length < 4)
+            {
+                _anim.InfoTableData = new byte[4];
+            }
+        }
+
+        [Browsable(false)]
+        public bool IsValidField => _anim.CurveFlag == BREFF.AnimType.Field;
+
+        [Category("Configuration"), Description("The specific type of physics field applied.")]
+        [RefreshProperties(RefreshProperties.All)]
+        public AnimTargetField FieldType
+        {
+            get => (AnimTargetField)_anim.KindType;
+            set => _anim.KindType = (byte)value;
+        }
+
+        [Category("Configuration"), Description("0 = Local, 1 = Global, 2 = ParticleManager")]
+        public byte Space { get => _anim.InfoTableData[0]; set => _anim.InfoTableData[0] = value; }
+
+        [Category("Configuration"), Description("0 = Velocity, 1 = Position")]
+        public byte AddTarget { get => _anim.InfoTableData[1]; set => _anim.InfoTableData[1] = value; }
+
+        [Category("Configuration"), Description("Bitmask for randomized calculation behaviors.")]
+        public byte Options { get => _anim.InfoTableData[2]; set => _anim.InfoTableData[2] = value; }
+
+        private float GetFloat(int offset)
+        {
+            if (offset + 4 > _anim.InfoTableData.Length) return 0f;
+            byte[] sub = new byte[4];
+            Array.Copy(_anim.InfoTableData, offset, sub, 0, 4);
+            if (BitConverter.IsLittleEndian) Array.Reverse(sub);
+            return BitConverter.ToSingle(sub, 0);
+        }
+
+        private void SetFloat(int offset, float value)
+        {
+            if (offset + 4 > _anim.InfoTableData.Length)
+            {
+                byte[] tempArray = _anim.InfoTableData;
+                Array.Resize(ref tempArray, offset + 4);
+                _anim.InfoTableData = tempArray;
+            }
+
+            byte[] sub = BitConverter.GetBytes(value);
+            if (BitConverter.IsLittleEndian) Array.Reverse(sub);
+            Array.Copy(sub, 0, _anim.InfoTableData, offset, 4);
+        }
+
+        [Category("Math Parameters")] public float Power { get => GetFloat(4); set => SetFloat(4, value); }
+        [Category("Math Parameters")] public float Speed { get => GetFloat(4); set => SetFloat(4, value); }
+        [Category("Math Parameters")] public float InnerSpeed { get => GetFloat(4); set => SetFloat(4, value); }
+
+        [Category("Math Parameters")] public float RotationX { get => GetFloat(8); set => SetFloat(8, value); }
+        [Category("Math Parameters")] public float OuterSpeed { get => GetFloat(8); set => SetFloat(8, value); }
+        [Category("Math Parameters")] public float Diffusion { get => GetFloat(8); set => SetFloat(8, value); }
+        [Category("Math Parameters")] public float RefDistance { get => GetFloat(8); set => SetFloat(8, value); }
+
+        [Category("Math Parameters")] public float RotationY { get => GetFloat(12); set => SetFloat(12, value); }
+        [Category("Math Parameters")] public float Distance { get => GetFloat(12); set => SetFloat(12, value); }
+
+        [Category("Math Parameters")] public float RotationZ { get => GetFloat(16); set => SetFloat(16, value); }
+
+        [Category("Math Parameters")]
+        public float TranslationX
+        {
+            get
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) return GetFloat(8);
+                if (FieldType == AnimTargetField.FieldNewton) return GetFloat(12);
+                if (FieldType == AnimTargetField.FieldVortex) return GetFloat(16);
+                return 0f;
+            }
+            set
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) SetFloat(8, value);
+                else if (FieldType == AnimTargetField.FieldNewton) SetFloat(12, value);
+                else if (FieldType == AnimTargetField.FieldVortex) SetFloat(16, value);
+            }
+        }
+
+        [Category("Math Parameters")]
+        public float TranslationY
+        {
+            get
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) return GetFloat(12);
+                if (FieldType == AnimTargetField.FieldNewton) return GetFloat(16);
+                if (FieldType == AnimTargetField.FieldVortex) return GetFloat(20);
+                return 0f;
+            }
+            set
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) SetFloat(12, value);
+                else if (FieldType == AnimTargetField.FieldNewton) SetFloat(16, value);
+                else if (FieldType == AnimTargetField.FieldVortex) SetFloat(20, value);
+            }
+        }
+
+        [Category("Math Parameters")]
+        public float TranslationZ
+        {
+            get
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) return GetFloat(16);
+                if (FieldType == AnimTargetField.FieldNewton) return GetFloat(20);
+                if (FieldType == AnimTargetField.FieldVortex) return GetFloat(24);
+                return 0f;
+            }
+            set
+            {
+                if (FieldType == AnimTargetField.FieldMagnet) SetFloat(16, value);
+                else if (FieldType == AnimTargetField.FieldNewton) SetFloat(20, value);
+                else if (FieldType == AnimTargetField.FieldVortex) SetFloat(24, value);
+            }
+        }
+
+        public override string ToString()
+        {
+            return IsValidField ? "..." : "N/A";
+        }
+    }
+
+    public class KeyframeEntry
+    {
+        public ushort Frame { get; set; }
+        public BREFF.KeyType ValueType { get; set; } = BREFF.KeyType.Fixed;
+        public BREFF.KeyCurveType Interpolation { get; set; } = BREFF.KeyCurveType.Linear;
+
+        public bool StartSlopeAdjust { get; set; }
+        public bool EndSlopeAdjust { get; set; }
+
+        public float Value { get; set; }
+        public float InSlope { get; set; }
+        public float OutSlope { get; set; }
+
+        public byte R { get; set; }
+        public byte G { get; set; }
+        public byte B { get; set; }
+        public byte Val { get; set; }
+
+        public KeyframeEntry() { }
     }
 }

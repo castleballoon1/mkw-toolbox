@@ -288,12 +288,32 @@ namespace kartlib.Serial
             EmitterF32 = 11
         }
 
+        public enum AnimTargetField : byte
+        {
+            FieldGravity = 0,
+            FieldSpeed = 1,
+            FieldMagnet = 2,
+            FieldNewton = 3,
+            FieldVortex = 4,
+            FieldSpin = 6,
+            FieldRandom = 7,
+            FieldTail = 8
+        }
+
         public enum KeyType : byte
         {
             None = 0,
             Fixed = 1,
             Range = 2,
             Random = 3
+        }
+
+        public enum KeyCurveType : byte
+        {
+            None = 0,
+            Linear = 1,
+            Hermite = 2,
+            Step = 3
         }
 
         public class _AnimationTable
