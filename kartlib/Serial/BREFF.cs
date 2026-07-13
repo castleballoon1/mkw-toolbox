@@ -494,9 +494,9 @@ namespace kartlib.Serial
                 uint nameTableSize = reader.ReadUInt32();
                 uint infoTableSize = reader.ReadUInt32();
 
-                KeyTableData = reader.ReadBytes((int)keyTableSize);
-                RangeTableData = reader.ReadBytes((int)rangeTableSize);
-                RandomTableData = reader.ReadBytes((int)randomTableSize);
+                KeyTableData = ReadAndAlign(reader, keyTableSize);
+                RangeTableData = ReadAndAlign(reader, rangeTableSize);
+                RandomTableData = ReadAndAlign(reader, randomTableSize);
 
                 if (nameTableSize > 0)
                 {
@@ -516,7 +516,7 @@ namespace kartlib.Serial
                     reader.Position = (int)(startPos + nameTableSize);
                 }
 
-                InfoTableData = reader.ReadBytes((int)infoTableSize);
+                InfoTableData = ReadAndAlign(reader, infoTableSize);
 
                 while (reader.Position % 4 != 0) reader.Position++;
             }
@@ -587,6 +587,12 @@ namespace kartlib.Serial
                 while ((writer.Position - startPos) % 4 != 0) writer.WriteByte(0);
             }
 
+            private byte[] ReadAndAlign(EndianReader reader, uint size)
+            {
+                byte[] data = reader.ReadBytes((int)size);
+                while (reader.Position % 4 != 0) reader.Position++;
+                return data;
+            }
             public int SectionSize()
             {
                 uint keyTableSize = (uint)(KeyTableData?.Length ?? 0);

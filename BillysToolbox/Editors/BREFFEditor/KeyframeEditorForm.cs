@@ -187,13 +187,15 @@ namespace ParticleEditor.Control
             var svc = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
             var node = context.Instance as AnimationDataNode;
 
-            if (svc != null && node != null)
+            if (svc != null && node != null && node.Format == BREFF.AnimationFormat.Keyed)
             {
-                using (var form = new KeyframeEditorForm(node))
-                {
-                    svc.ShowDialog(form);
-                }
+                var parentForm = Form.ActiveForm;
+
+                var form = new KeyframeEditorForm(node);
+                form.MdiParent = parentForm;
+                form.Show();
             }
+
             return value;
         }
     }

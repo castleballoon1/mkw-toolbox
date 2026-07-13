@@ -18,6 +18,9 @@ namespace ParticleEditor.Control
                 if (CurveFlag == AnimType.Child || CurveFlag == AnimType.Field)
                     return "N/A";
 
+                if (Format == AnimationFormat.Baked)
+                    return "N/A [Convert to Keyed]";
+
                 return "...";
             }
             set { }
@@ -44,10 +47,50 @@ namespace ParticleEditor.Control
         }
 
         [Category("General Info"), Description("Changes the data format between raw pre-calculated frames (Baked) or timeline paths (Keyed).")]
+        [RefreshProperties(RefreshProperties.All)]
         public AnimationFormat Format
         {
             get { return (AnimationFormat)AnimationItem.Identifier; }
-            set { AnimationItem.Identifier = (byte)value; }
+            set
+            {
+                if (AnimationItem.Identifier == (byte)value) return;
+
+                if (value == AnimationFormat.Keyed)
+                {
+                    DialogResult result = MessageBox.Show(
+                        "Converting this animation to Keyed will permanently erase the existing baked frame data. Are you sure you want to continue?",
+                        "Confirm Conversion",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        AnimationItem.Identifier = (byte)value;
+
+                        using (var ms = new MemoryStream())
+                        using (var bw = new EndianWriter(ms, Endianness.BigEndian))
+                        {
+                            bw.WriteUInt16(0);
+                            bw.WriteUInt16(0);
+                            AnimationItem.KeyTableData = ms.ToArray();
+                        }
+                    }
+                }
+                else if (value == AnimationFormat.Baked)
+                {
+                    DialogResult result = MessageBox.Show(
+                        "Converting to Baked will erase your keyframes. This tool cannot mathematically generate baked data for you. Are you sure?",
+                        "Warning",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        AnimationItem.Identifier = (byte)value;
+                        AnimationItem.KeyTableData = Array.Empty<byte>();
+                    }
+                }
+            }
         }
 
         [Category("Configuration"), Description("The raw byte index of the animation target register.")]

@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
-using kartlib.Serial;
-using ParticleEditor.Control;
+﻿using kartlib.Serial;
+using System.ComponentModel;
+using System.Drawing.Design;
+using System.Windows.Forms.Design;
 
-namespace BillysToolbox.Editors.BREFFEditor
+namespace ParticleEditor.Control
 {
     internal partial class ChildEventEditor : Form
     {
@@ -49,7 +50,7 @@ namespace BillysToolbox.Editors.BREFFEditor
             {
                 ushort entryCount = BitConverter.IsLittleEndian ?
                     System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(br.ReadUInt16()) : br.ReadUInt16();
-                br.ReadUInt16(); // Padding
+                br.ReadUInt16();
 
                 for (int i = 0; i < entryCount; i++)
                 {
@@ -76,7 +77,7 @@ namespace BillysToolbox.Editors.BREFFEditor
             using (var bw = new EndianWriter(ms, Endianness.BigEndian))
             {
                 bw.WriteUInt16((ushort)_events.Count);
-                bw.WriteUInt16(0); // Padding
+                bw.WriteUInt16(0);
 
                 foreach (var ev in _events)
                 {
@@ -97,6 +98,30 @@ namespace BillysToolbox.Editors.BREFFEditor
 
             this.DialogResult = DialogResult.OK;
             this.Close();
+        }
+    }
+
+    public class ChildEventUIEditor : UITypeEditor
+    {
+        public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
+        {
+            return UITypeEditorEditStyle.Modal;
+        }
+
+        public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
+        {
+            var svc = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+            var node = context.Instance as AnimationDataNode;
+
+            if (svc != null && node != null && node.CurveFlag == kartlib.Serial.BREFF.AnimType.Child)
+            {
+                var parentForm = Form.ActiveForm;
+
+                var form = new ChildEventEditor(node);
+                form.MdiParent = parentForm;
+                form.Show();
+            }
+            return value;
         }
     }
 }

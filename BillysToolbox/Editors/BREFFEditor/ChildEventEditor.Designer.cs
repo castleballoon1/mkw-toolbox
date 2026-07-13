@@ -1,4 +1,4 @@
-﻿namespace BillysToolbox.Editors.BREFFEditor
+﻿namespace ParticleEditor.Control
 {
     partial class ChildEventEditor
     {
