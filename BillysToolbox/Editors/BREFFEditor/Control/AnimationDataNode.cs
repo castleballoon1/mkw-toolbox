@@ -7,7 +7,7 @@ namespace ParticleEditor.Control
 {
     internal class AnimationDataNode : DataNode
     {
-        internal BREFF._Animation AnimationItem;
+        internal _Animation AnimationItem;
 
         [Category("Animation Data"), Description("Launch the dedicated editor for timeline Keyframes.")]
         [Editor(typeof(KeyframeUIEditor), typeof(UITypeEditor))]
@@ -15,7 +15,7 @@ namespace ParticleEditor.Control
         {
             get
             {
-                if (CurveFlag == BREFF.AnimType.Child || CurveFlag == BREFF.AnimType.Field)
+                if (CurveFlag == AnimType.Child || CurveFlag == AnimType.Field)
                     return "N/A";
 
                 return "...";
@@ -38,15 +38,15 @@ namespace ParticleEditor.Control
         {
             get
             {
-                return CurveFlag == BREFF.AnimType.Child ? "..." : "N/A";
+                return CurveFlag == AnimType.Child ? "..." : "N/A";
             }
             set { }
         }
 
         [Category("General Info"), Description("Changes the data format between raw pre-calculated frames (Baked) or timeline paths (Keyed).")]
-        public BREFF.AnimationFormat Format
+        public AnimationFormat Format
         {
-            get { return (BREFF.AnimationFormat)AnimationItem.Identifier; }
+            get { return (AnimationFormat)AnimationItem.Identifier; }
             set { AnimationItem.Identifier = (byte)value; }
         }
 
@@ -62,7 +62,7 @@ namespace ParticleEditor.Control
         {
             get
             {
-                if (AnimationItem.CurveFlag == BREFF.AnimType.ParticleU8)
+                if (AnimationItem.CurveFlag == AnimType.ParticleU8)
                 {
                     switch (AnimationItem.KindType)
                     {
@@ -206,7 +206,7 @@ namespace ParticleEditor.Control
             set { AnimationItem.RandomSeed = value; }
         }
 
-        public AnimationDataNode(BREFF._Animation animItem, string nodeName) : base(nodeName)
+        public AnimationDataNode(_Animation animItem, string nodeName) : base(nodeName)
         {
             this.AnimationItem = animItem;
             SetImage("page");
@@ -216,9 +216,9 @@ namespace ParticleEditor.Control
     [TypeConverter(typeof(FieldSettingsConverter))]
     public class FieldSettings
     {
-        private kartlib.Serial.BREFF._Animation _anim;
+        private _Animation _anim;
 
-        public FieldSettings(kartlib.Serial.BREFF._Animation anim)
+        public FieldSettings(_Animation anim)
         {
             _anim = anim;
             if (_anim.InfoTableData == null || _anim.InfoTableData.Length < 4)
@@ -228,7 +228,7 @@ namespace ParticleEditor.Control
         }
 
         [Browsable(false)]
-        public bool IsValidField => _anim.CurveFlag == BREFF.AnimType.Field;
+        public bool IsValidField => _anim.CurveFlag == AnimType.Field;
 
         [Category("Configuration"), Description("The specific type of physics field applied.")]
         [RefreshProperties(RefreshProperties.All)]
@@ -347,8 +347,8 @@ namespace ParticleEditor.Control
     public class KeyframeEntry
     {
         public ushort Frame { get; set; }
-        public BREFF.KeyType ValueType { get; set; } = BREFF.KeyType.Fixed;
-        public BREFF.KeyCurveType Interpolation { get; set; } = BREFF.KeyCurveType.Linear;
+        public KeyType ValueType { get; set; } = KeyType.Fixed;
+        public KeyCurveType Interpolation { get; set; } = KeyCurveType.Linear;
 
         public bool StartSlopeAdjust { get; set; }
         public bool EndSlopeAdjust { get; set; }
