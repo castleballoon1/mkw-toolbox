@@ -1,6 +1,6 @@
-﻿namespace BillysToolbox.Editors.BREFFEditor
+﻿namespace ParticleEditor.Control
 {
-    partial class ChildEventEditor
+    partial class KeyframeEditorForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChildEventEditor));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(KeyframeEditorForm));
             dataGridView1 = new DataGridView();
             btnSave = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
@@ -41,29 +41,29 @@
             dataGridView1.Location = new Point(12, 12);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowTemplate.Height = 25;
-            dataGridView1.Size = new Size(1096, 225);
+            dataGridView1.Size = new Size(504, 240);
             dataGridView1.TabIndex = 0;
             // 
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSave.Location = new Point(1033, 243);
+            btnSave.Location = new Point(441, 258);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(75, 23);
             btnSave.TabIndex = 1;
             btnSave.Text = "Save";
             btnSave.UseVisualStyleBackColor = true;
             // 
-            // ChildEventEditor
+            // KeyframeEditorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1120, 275);
+            ClientSize = new Size(528, 287);
             Controls.Add(btnSave);
             Controls.Add(dataGridView1);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Name = "ChildEventEditor";
-            Text = "BREFF Animation Event Editor 5000";
+            Name = "KeyframeEditorForm";
+            Text = "Keyframe Editor 8000";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
         }
